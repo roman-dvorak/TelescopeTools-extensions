@@ -1,0 +1,11 @@
+[Core]
+Name = TTloadcr2
+Module = TT_loadcr2
+
+[Documentation]
+Author = Roman Dvorak
+Category = loader
+Version = 0.1
+Website = None
+Email = roman-dvorak@email.cz
+Description = Canon RAW loader for TT

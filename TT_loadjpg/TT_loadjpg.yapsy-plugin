@@ -1,0 +1,11 @@
+[Core]
+Name = TTloadjpg
+Module = TT_loadjpg
+
+[Documentation]
+Author = Roman Dvorak
+Category = loader
+Version = 0.1
+Website = None
+Email = roman-dvorak@email.cz
+Description = JPEG loader for TT

@@ -1,0 +1,11 @@
+[Core]
+Name = RA_HBSTEP_driver
+Module = RA_HBSTEP_driver
+
+[Documentation]
+Author = Roman Dvorak
+Category = loader
+Version = 0.1
+Website = None
+Email = roman-dvorak@email.cz
+Description = JPEG loader for TT
