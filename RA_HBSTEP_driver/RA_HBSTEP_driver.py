@@ -14,27 +14,19 @@ class Communicator(QtCore.QThread):
 
     def __init__(self, parent = None, win = None):
         self.parent= parent
-        print "Communicator nastaven"
-
         adress = "ws://"+str(self.parent.TbxIP.text())+":"+str(self.parent.NbxPORT.value())+"/ws"
-
         print "Adresa:", adress
         self.ws = websocket.create_connection(adress)
-        self.ws.send("Hello, World")
-        result = self.ws.recv()
-        print("Received {}".format(result))
 
         self.vTimeSpd = 0
         self.vDir = True
-
         self.vSHTtemp = 88.88
         self.vSHThumi = 88.88
         self.vLTStemp = 88.88
 
         self.ws.send("$raspd;%d;%d;" %(self.vDir, self.vTimeSpd))
         result = self.ws.recv()
-        print("Received {}".format(result))
-
+        print "Received:", result
 
 
     def __del__(self):
@@ -44,12 +36,19 @@ class Communicator(QtCore.QThread):
 
 
     def sync(self):
+        print "sync procedure"
         self.getWeather()
         self.updateUI()
+
+        self.ws.send("$raspd;%d;%d;" %(self.vTimeSpd, self.vDir))
+        result = self.ws.recv()
+        if result.split(';')[0] == "&lts":
+            self.vLTStemp = float(result.split(';')[1])
 
 
     def getWeather(self):
         self.ws.send("$sht25;")
+        print "getWeather"
         result = self.ws.recv()
         if result.split(';')[0] == "&sht25":
             self.vSHTtemp = float(result.split(';')[1])
@@ -71,7 +70,7 @@ class Communicator(QtCore.QThread):
         self.parent.LcnRAspeed3.display((self.vTimeSpd >> 0)&0xff)
 
 
-    def change(self, widget):
+    def change(self, widget=None):
         print "change,", self, widget
         self.vTimeSpd = self.parent.NbxSpdTime.value()
 
@@ -82,7 +81,7 @@ class Communicator(QtCore.QThread):
         # Note: This is never called directly. It is called by Qt once the
         # thread environment has been set up.
         while not self.exiting:
-            pass
+            print "run while"
         print "Communicator ukoncen"
 
 class RA_HBSTEP_driver(IPlugin):
@@ -102,7 +101,6 @@ class RA_HBSTEP_driver(IPlugin):
     def getName(self):
         return self.UserName
 
-
     def activate(self):
         print "activated"
 
@@ -111,6 +109,10 @@ class RA_HBSTEP_driver(IPlugin):
 
     def load(self):
         print "loader"
+
+    def OnSync(self, data = None):
+        print "local sync"
+        self.thread.sync()
 
     def show(self, parent):
         self.parent = parent
@@ -283,9 +285,10 @@ class RA_HBSTEP_driver(IPlugin):
 
         self.thread.updateUI()
 
-        self.NbxSpdTime.valueChanged.connect(self.thread.change)
-        self.BtnSync.clicked.connect(self.thread.sync)
-        self.ChbAutoUpdate.stateChanged.connect(self.thread.change)
+        self.NbxSpdTime.valueChanged.connect(lambda: self.thread.change())
+        #self.BtnSync.clicked.connect(self.OnSync)
+        self.BtnSync.clicked.connect(lambda: self.thread.sync())
+        self.ChbAutoUpdate.stateChanged.connect(lambda: self.thread.change())
         
 
     
