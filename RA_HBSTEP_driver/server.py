@@ -90,7 +90,9 @@ class RAserver():
         self.app.listen(self.port)
 
         self.lcd.home()
-        self.lcd.puts("Loading 01")
+        self.lcd.puts("IP:"+str(self.lIP))
+        self.lcd.set_row2()
+        self.lcd.puts("WS port: %d" %self.port )
 
         tornado.ioloop.IOLoop.current().start()
 
@@ -142,6 +144,44 @@ class SocketHandler(websocket.WebSocketHandler):
                 temp = self.ra.lts.get_temp()
                 print "pozadavek o LTS t:", temp
                 self.write_message(u"&lts;%f;" %(temp))
+            elif m_type == "settime":
+                print "set time speed"
+                self.vTimeSpd = int(message.split(';')[1])
+                self.vTimeDir =bool(message.split(';')[2])
+                self.write_message(u"&settime;%i;%i" %(self.vTimeSpd, self.vTimeDir))
+            elif m_type == "gettime":
+                print "get time speed"
+                #self.vTimeSpd = int(message.split(';')[1])
+                #self.vTimeDir =bool(message.split(';')[2])
+                self.write_message(u"&gettime;%i;%i" %(self.vTimeSpd, self.vTimeDir))
+            elif m_type == "savetime":
+                print "save time speed"
+                #self.vTimeSpd = int(message.split(';')[1])
+                #self.vTimeDir =bool(message.split(';')[2])
+                self.write_message(u"&savetime;%i;%i" %(self.vTimeSpd, self.vTimeDir))
+            elif m_type == "reloadtime":
+                print "reload time speed"
+                #self.vTimeSpd = int(message.split(';')[1])
+                #self.vTimeDir =bool(message.split(';')[2])
+                self.write_message(u"&reloadtime;%i;%i" %(self.vTimeSpd, self.vTimeDir))
+            elif m_type == "setmultipler":
+                print "set time speed multipler"
+                self.vActMultiplerSpd = int(message.split(';')[1])
+                self.vActMultiplerDir =bool(message.split(';')[2])
+                self.write_message(u"&setmultipler;%i;" %(self.vActMultiplerSpd, self.vActMultiplerDir))
+            elif m_type == "setspeed":
+                print "set actual speed "
+                self.vActSpd = int(message.split(';')[1])
+                self.vActDir =bool(message.split(';')[2])
+                self.write_message(u"&setspeed;%i;" %(self.vActSpd, self.vActDir))
+            elif m_type == "onfollow":
+                print "set actual speed "
+                self.vfollow = True
+                self.write_message(u"&onfollow;%i;" %(self.vfollow))
+            elif m_type == "offfollow":
+                print "set actual speed "
+                self.vfollow = False
+                self.write_message(u"&offfollow;%i;" %(self.vfollow))
             else:
                 print "Neznama dolarova operace"
                 self.write_message(u"&None")
