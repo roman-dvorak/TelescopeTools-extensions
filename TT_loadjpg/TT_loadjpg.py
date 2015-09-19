@@ -6,6 +6,7 @@ from PyQt4 import QtCore, QtGui
 
 class TT_loadjpg(IPlugin):
     name = "JPG loader"
+    
 
     def __init__(self):
         self.type = 1   #loader
