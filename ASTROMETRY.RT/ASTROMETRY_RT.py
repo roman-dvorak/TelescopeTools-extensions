@@ -4,26 +4,52 @@
 from yapsy.IPlugin import IPlugin
 from PyQt4 import QtCore, QtGui
 from threading import Thread, RLock
+import subprocess
+import shlex
 import websocket
 import csv
 import time
 
 
 class Communicator(QtCore.QThread):
-
-    def __init__(self, parent = None, win = None):
+    def __init__(self, parent = None):
         super(Communicator, self).__init__()
         self.parent= parent
-        
-
 
     def __del__(self):
         print "Communicator ukoncovani ..."
         self.exiting = True
         self.wait()
 
-        self.updateUI()
+    def IsAstometryInstalled(self):
+        status = False
+        try:
+            process = subprocess.Popen(shlex.split("solve-field"), stdout=None)
+            while True:
+                output = process.stdout.readline()
+                if output == '' and process.poll() is not None:
+                    break
+            status = True
+        except Exception, e:
+            print "ASTROMETRY.NET isnt installed"
+        return status
 
+    def run(self):
+        while not self.exiting:
+            time.sleep(1)
+        print "Communicator ukoncen"
+
+    def IsAstometryInstalledaaa(self, command):
+        process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
+        while True:
+            output = process.stdout.readline()
+            if output == '' and process.poll() is not None:
+                break
+            if output:
+                #self.logger.info(output.strip())
+                print output.strip()
+        status = process.poll()
+        return status
 
     def run(self):
         while not self.exiting:
@@ -33,7 +59,6 @@ class Communicator(QtCore.QThread):
 
 class ASTROMETRY_RT(IPlugin):
     name = "ASTROMETRY real-time"
-
     def __init__(self):
         self.type = 3
         self.UserName = "MLAB RA driver"
@@ -68,6 +93,14 @@ class ASTROMETRY_RT(IPlugin):
         ## ContentWidget
         ## HorizontalLayout 
         ### GroupBox
+
+        thread = Communicator(self)
+        thread.start()
+
+        try:
+            thread.IsAstometryInstalled()
+        except Exception, e:
+            raise e
 
         self.win = QtGui.QWidget()
 
