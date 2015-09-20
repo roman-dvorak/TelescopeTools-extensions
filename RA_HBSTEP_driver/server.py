@@ -59,6 +59,11 @@ class RAserver():
         self.lts = cfg.get_device("lts")
         self.lcd.light(1)
 
+        self.vTimeSpd = 0
+        self.vTimeDir = 0
+        self.vActSpd = 0
+        self.vActDir = 0
+
         time.sleep(0.5)
         self.spi.SPI_config(self.spi.I2CSPI_MSB_FIRST| self.spi.I2CSPI_MODE_CLK_IDLE_HIGH_DATA_EDGE_TRAILING| self.spi.I2CSPI_CLK_461kHz)
         time.sleep(0.5)
@@ -146,48 +151,58 @@ class SocketHandler(websocket.WebSocketHandler):
                 self.write_message(u"&lts;%f;" %(temp))
             elif m_type == "settime":
                 print "set time speed"
-                self.vTimeSpd = int(message.split(';')[1])
-                self.vTimeDir =bool(message.split(';')[2])
-                self.write_message(u"&settime;%i;%i" %(self.vTimeSpd, self.vTimeDir))
+                self.ra.vTimeSpd = int(message.split(';')[1])
+                self.ra.vTimeDir =bool(message.split(';')[2])
+                self.write_message(u"&settime;%i;%i" %(self.ra.vTimeSpd, self.ra.vTimeDir))
             elif m_type == "gettime":
                 print "get time speed"
                 #self.vTimeSpd = int(message.split(';')[1])
                 #self.vTimeDir =bool(message.split(';')[2])
-                self.write_message(u"&gettime;%i;%i" %(self.vTimeSpd, self.vTimeDir))
+                self.write_message(u"&gettime;%i;%i" %(self.ra.vTimeSpd, self.ra.vTimeDir))
             elif m_type == "savetime":
                 print "save time speed"
                 #self.vTimeSpd = int(message.split(';')[1])
                 #self.vTimeDir =bool(message.split(';')[2])
-                self.write_message(u"&savetime;%i;%i" %(self.vTimeSpd, self.vTimeDir))
+                self.write_message(u"&savetime;%i;%i" %(self.ra.vTimeSpd, self.ra.vTimeDir))
+                self.ra.vTimeSpd = int(message.split(';')[1])
+                self.ra.vTimeDir = bool(message.split(';')[2])
             elif m_type == "reloadtime":
                 print "reload time speed"
                 #self.vTimeSpd = int(message.split(';')[1])
                 #self.vTimeDir =bool(message.split(';')[2])
-                self.write_message(u"&reloadtime;%i;%i" %(self.vTimeSpd, self.vTimeDir))
+                self.write_message(u"&reloadtime;%i;%i" %(self.ra.vTimeSpd, self.ra.vTimeDir))
             elif m_type == "setmultipler":
                 print "set time speed multipler"
-                self.vActMultiplerSpd = int(message.split(';')[1])
-                self.vActMultiplerDir =bool(message.split(';')[2])
-                self.write_message(u"&setmultipler;%i;" %(self.vActMultiplerSpd, self.vActMultiplerDir))
-            elif m_type == "setspeed":
+                self.ra.vActMultiplerSpd = int(message.split(';')[1])
+                self.ra.vActMultiplerDir =bool(message.split(';')[2])
+                self.write_message(u"&setmultipler;%i;" %(self.ra.vActMultiplerSpd, self.ra.vActMultiplerDir))
+            elif m_type == "raspd":
                 print "set actual speed "
-                self.vActSpd = int(message.split(';')[1])
-                self.vActDir =bool(message.split(';')[2])
-                self.write_message(u"&setspeed;%i;" %(self.vActSpd, self.vActDir))
+                self.ra.vActSpd = int(message.split(';')[1])
+                self.ra.vActDir = int(message.split(';')[2])
+                self.write_message(u"&raspd;%d;%d" %(self.ra.vActSpd, self.ra.vActDir))
+                if self.ra.vActDir == 0:
+                    self.ra.spi.SPI_write(self.ra.spi.I2CSPI_SS0, [0x50])
+                else:
+                    self.ra.spi.SPI_write(self.ra.spi.I2CSPI_SS0, [0x51])
+                print self.ra.vActDir, self.ra.vActSpd
+                self.ra.spi.SPI_write(self.ra.spi.I2CSPI_SS0, [(self.ra.vActSpd >> 16)&0xff])
+                self.ra.spi.SPI_write(self.ra.spi.I2CSPI_SS0, [(self.ra.vActSpd >> 8)&0xff])
+                self.ra.spi.SPI_write(self.ra.spi.I2CSPI_SS0, [(self.ra.vActSpd >> 0)&0xff])
             elif m_type == "onfollow":
                 print "set actual speed "
-                self.vfollow = True
-                self.write_message(u"&onfollow;%i;" %(self.vfollow))
+                self.ra.vFollow = True
+                self.write_message(u"&onfollow;%i;" %(self.ra.vFollow))
             elif m_type == "offfollow":
                 print "set actual speed "
-                self.vfollow = False
-                self.write_message(u"&offfollow;%i;" %(self.vfollow))
+                self.ra.vFollow = False
+                self.write_message(u"&offfollow;%i;" %(self.ra.vFollow))
             else:
                 print "Neznama dolarova operace"
                 self.write_message(u"&None")
 
         else:
-            print "unsupported"
+            print "unsupported", message
             self.write_message(u"&unsupported")
         #    for client in cl:
         #        client.write_message(u"multicast: " + message)
