@@ -62,10 +62,16 @@ class Communicator(QtCore.QThread):
 
         tif = libtiff.TIFF.open(actual)
         image = tif.read_image()
-        print image, image.shape, type(image)
+        print image, image.shape, type(image), np.swapaxes(image,2,0).shape
 
-        im = Image.fromarray(image)
-        im.show()
+
+        #ima = Image.fromarray(np.swapaxes(image,2,0))
+        #imb = Image.fromarray(image[1], 'RGB')
+        #imc = Image.fromarray(image[2], 'RGB')
+
+        #ima.save("ahoj.png")
+        #imb.show()
+        #imc.show()
 
 
 

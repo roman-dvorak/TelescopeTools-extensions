@@ -74,6 +74,8 @@ class Communicator(QtCore.QThread):
         self.vLTStemp = 88.88
         self.vChange = False
         self.vAutoUpdate = True
+        self.vLastOutPut = False
+        self.vRecLoc = False
 
         print "##created"
 
@@ -150,13 +152,17 @@ class Communicator(QtCore.QThread):
         elif type == "ChbTimeDir":
             self.vDir = bool(widget.checkState())
             self.vActDir = self.vDir
-            print type, ": ", widget.checkState()
+            #print type, ": ", widget.checkState()
             self.sendSpd()
         elif type == "ChbAutoUpdate":
             self.vAutoUpdate = bool(widget.checkState())
-            print type, ": ", widget.checkState()
+            #print type, ": ", widget.checkState()
         elif type == "SldTrans":
-            self.vTrans = widget.value()
+            self.vTrans = bool(widget.checkState())
+        elif type == "ChbLastOutPut":
+            self.vLastOutPut = widget.checkState()
+        elif type == "ChbRecordLocaly":
+            self.vRecLoc = widget.checkState()
 
         self.updateUI()
 
@@ -187,7 +193,6 @@ class Communicator(QtCore.QThread):
             self.vActSpd = self.vTimeSpd - self.vTimeSpd*(self.vTrans**2)
             print  self.vActSpd, self.vTimeSpd, self.vTimeSpd*(self.vTrans**2), self.vTimeSpd - self.vTimeSpd*(self.vTrans**2)
             if self.vActSpd < 0:
-                print "opak"
                 self.vActSpd = self.vActSpd*-1
                 self.vActDir = not self.vDir
             #if self.vActSpd < self.vTimeSpd*(self.vTrans**2):
@@ -225,17 +230,31 @@ class Communicator(QtCore.QThread):
         # thread environment has been set up.
         timer1 = time.time()
         timer2 = time.time()
+        fLog =open("Log_%s.txt" %time.strftime("%Y%m%d"),'a')
         while not self.exiting:
             if timer1+5 < time.time():
                 if self.vAutoUpdate:
                     self.getWeather()
                 if not self.vChange:
                     self.upgrade()
+                if self.vLastOutPut:
+                    try:
+                        fLast=open("LastData.txt",'w')
+                        fLast.write("%.2f\n%.2f" %(round(self.vSHTtemp,2), round(self.vSHThumi,2)))
+                        fLast.close()
+                    except Exception, e:
+                        print e
+                if self.vRecLoc:
+                    try:
+                        fLog =open("Log_%s.txt" %time.strftime("%Y%m%d"),'a')
+                        fLog.write( str(time.time()) + ";" + str(self.vSHTtemp) + ";" + str(self.vSHThumi) + ";" + str(self.vLTStemp) + ";\n")
+                        fLog.close()
+                    except Exception, e:
+                        print e
                 timer1 = time.time()
                 self.updateUI()
-            if timer2+2.5 < time.time():
-                pass
-                print self.vActDir, self.vActSpd, self.vDir, self.vTimeSpd
+            #if timer2+2.5 < time.time():
+                #print self.vActDir, self.vActSpd, self.vDir, self.vTimeSpd
             time.sleep(1)
         print "Communicator ukoncen"
 
@@ -451,11 +470,13 @@ class RA_HBSTEP_driver(IPlugin):
         self.BtnSetSaveRemotly = QtGui.QPushButton("Save remotly")
         self.ChbRecordRemotly = QtGui.QCheckBox("Record remotly")
         self.ChbRecordLocaly = QtGui.QCheckBox("Record localy")
+        self.ChbLastOutPut = QtGui.QCheckBox("Record last file")
         VbxSet.addWidget(self.BtnSetGetAllData)
         VbxSet.addWidget(self.BtnSetSaveLocaly)
         VbxSet.addWidget(self.BtnSetSaveRemotly)
         VbxSet.addWidget(self.ChbRecordRemotly)
         VbxSet.addWidget(self.ChbRecordLocaly)
+        VbxSet.addWidget(self.ChbLastOutPut)
 
         PropertiesMainHFrame.addLayout(HbxWeather)
         PropertiesMainHFrame.addLayout(VbxMovementSpd)
@@ -487,6 +508,7 @@ class RA_HBSTEP_driver(IPlugin):
         self.ChbAutoUpdate.stateChanged.connect(lambda: self.thread.change("ChbAutoUpdate", self.ChbAutoUpdate))
         self.ChbRecordLocaly.stateChanged.connect(lambda: self.thread.change("ChbRecordLocaly", self.ChbRecordLocaly))
         self.ChbRecordRemotly.stateChanged.connect(lambda: self.thread.change("ChbRecordRemotly", self.ChbRecordRemotly))
+        self.ChbLastOutPut.stateChanged.connect(lambda: self.thread.change("ChbLastOutPut", self.ChbLastOutPut))
         self.ChbTimeDir.stateChanged.connect(lambda: self.thread.change("ChbTimeDir", self.ChbTimeDir))
 
 
