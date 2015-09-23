@@ -14,6 +14,7 @@ import csv
 import time
 from PIL import Image
 import libtiff
+import pyfits
 import numpy as np
 
 
@@ -61,8 +62,23 @@ class Communicator(QtCore.QThread):
         actual = self.parent.actualFile
 
         tif = libtiff.TIFF.open(actual)
-        image = tif.read_image()
+        #image = tif.read_image()
+        image = np.swapaxes(tif.read_image(), 0, 0)
+
+        hdu = pyfits.PrimaryHDU(image)
+        hdulist = pyfits.HDUList([hdu])
+        hdulist.writeto('new.fits')
+
         print image, image.shape, type(image), np.swapaxes(image,2,0).shape
+       
+        hdu0 = pyfits.PrimaryHDU(image[:,:,0])
+        hdu1 = pyfits.PrimaryHDU(image[:,:,1])
+        hdu2 = pyfits.PrimaryHDU(image[:,:,2])
+
+        data = image[:,:,0] + image[:,:,1] + image[:,:,2]
+        dataH = pyfits.PrimaryHDU(data)
+        hdulist = pyfits.HDUList([dataH])
+        hdulist.writeto('new.fits')
 
 
         #ima = Image.fromarray(np.swapaxes(image,2,0))
