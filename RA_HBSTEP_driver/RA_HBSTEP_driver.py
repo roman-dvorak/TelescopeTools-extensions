@@ -158,7 +158,7 @@ class Communicator(QtCore.QThread):
             self.vAutoUpdate = bool(widget.checkState())
             #print type, ": ", widget.checkState()
         elif type == "SldTrans":
-            self.vTrans = bool(widget.checkState())
+            self.vTrans = widget.value()
         elif type == "ChbLastOutPut":
             self.vLastOutPut = widget.checkState()
         elif type == "ChbRecordLocaly":

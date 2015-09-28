@@ -6,6 +6,8 @@ import os.path
 import sys
 from yapsy.IPlugin import IPlugin
 from PyQt4 import QtCore, QtGui
+from PyQt4.QtOpenGL import *
+from OpenGL.GL import *
 from threading import Thread, RLock
 import subprocess
 import shlex
@@ -16,6 +18,30 @@ from PIL import Image
 import libtiff
 import pyfits
 import numpy as np
+
+
+class GLWidget(QGLWidget):
+    def __init__(self, parent = None):
+        super(WfWidget, self).__init__(parent)
+
+    def paintGL(self):
+        glColor3f(0.0, 0.0, 1.0)
+        glRectf(-5, -5, 5, 5)
+        glColor3f(1.0, 0.0, 0.0)
+        glBegin(GL_LINES)
+        glVertex3f(0, 0, 0)
+        glVertex3f(20, 20, 0)
+        glEnd()
+
+    def resizeGL(self, w, h):
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glOrtho(-50, 50, -50, 50, -50.0, 50.0)
+        glViewport(0, 0, w, h)
+
+    def initializeGL(self):
+        glClearColor(0.0, 0.0, 0.0, 1.0)
+        glClear(GL_COLOR_BUFFER_BIT)
 
 
 class Communicator(QtCore.QThread):
@@ -141,46 +167,110 @@ class ASTROMETRY_RT(IPlugin):
             self.win = QtGui.QWidget()
             self.contentWidget = QtGui.QWidget(self.win)
             self.content = QtGui.QHBoxLayout(self.contentWidget)
+            #self.Aboute = QtGui.QVBoxLayout()
 
-            self.AbouteGroup = QtGui.QGroupBox("ASTROMETRY setting")
-            self.Aboute = QtGui.QVBoxLayout(self.win)
-            self.AbouteProject = QtGui.QVBoxLayout(self.win)
+            ChbCollapseLeftPanel = QtGui.QCheckBox()
+            ChbCollapseLeftPanel.setObjectName("ChbCollapse")
+            self.VbxProjectToolBox = QtGui.QVBoxLayout()
+            '''
+            self.ProjectToolBox = QtGui.QToolBox()
+            #self.Aboute.addWidget(self.ProjectToolBox)
+            
+            self.FoldelTBitem = QtGui.QVBoxLayout()
             BtnOpenFolder = QtGui.QPushButton("Open working folder")
-            self.Aboute.addWidget(BtnOpenFolder)
-            self.Aboute.addLayout(self.AbouteProject)
-            self.AbouteGroup.setLayout(self.Aboute)
-        
+            self.FoldelTBitem.addWidget(BtnOpenFolder)
+            FoldelTBitemWid = QtGui.QWidget()
+            FoldelTBitemWid.setLayout(self.FoldelTBitem)
+            self.ProjectToolBox.addItem(FoldelTBitemWid, QtCore.QString("Project Folder"))
+            '''
+            #self.AbouteGroup = QtGui.QGroupBox("ASTROMETRY setting")
+            #self.Aboute = QtGui.QVBoxLayout(self.win)
+            #self.AbouteProject = QtGui.QVBoxLayout(self.win)
+            #BtnOpenFolder = QtGui.QPushButton("Open working folder")
+            #self.Aboute.addWidget(BtnOpenFolder)
+            #self.Aboute.addLayout(self.AbouteProject)
+            #self.AbouteGroup.setLayout(self.Aboute)
+            #self.Aboute = QtGui.QVBoxLayout()
+            #self.AbouteGroup.setLayout(self.Aboute)
+            '''
             self.ProcessingGroup = QtGui.QGroupBox("Processing")
             self.ProcessingFrame = QtGui.QVBoxLayout(self.win)
             self.ProcessingToolBar = QtGui.QHBoxLayout(self.win)
             self.ProcessingShower = QtGui.QVBoxLayout(self.win)
             self.ProcessingInfoLine = QtGui.QHBoxLayout(self.win)
+            #self.ProcessingView = QGLWidget()
+            #self.ProcessingShower.addWidget(self.ProcessingView)
             self.ProcessingFrame.addLayout(self.ProcessingToolBar)
             self.ProcessingFrame.addLayout(self.ProcessingShower)
             self.ProcessingFrame.addLayout(self.ProcessingInfoLine)
             self.ProcessingGroup.setLayout(self.ProcessingFrame)
-            
-            self.content.addWidget(self.AbouteGroup,1)
-            self.content.addWidget(self.ProcessingGroup,3)
+            '''
 
-            BtnOpenFolder.clicked.connect(self.ChooseWorkingDir)
+            self.LeftPanel()
+            self.content.addWidget(ChbCollapseLeftPanel)
+            self.content.addLayout(self.VbxProjectToolBox,4)
+            self.content.addStretch(12)
+            #self.content.addWidget(self.ProcessingGroup,12)
+
+            #BtnOpenFolder.clicked.connect(self.ChooseWorkingDir)
+            ChbCollapseLeftPanel.stateChanged.connect(self.CollapseLP)
             return self.win
 
+    def LeftPanel(self):
+        parent = self.VbxProjectToolBox
+        DockProjectFolder = QtGui.QDockWidget("Data source folder")
+        DockProjectFolder.setFeatures(QtGui.QDockWidget.DockWidgetClosable | QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable | QtGui.QDockWidget.DockWidgetVerticalTitleBar)
+        DockProjectFolder.setAllowedAreas(QtCore.Qt.AllDockWidgetAreas)
+        DockAstrometrySetting = QtGui.QDockWidget("Astrometry setting")
+        DockAstrometrySetting.setFeatures(QtGui.QDockWidget.DockWidgetClosable | QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable | QtGui.QDockWidget.DockWidgetVerticalTitleBar)
+        DockAstrometryOut = QtGui.QDockWidget("Astrometry output data")
+        DockAstrometryOut.setFeatures(QtGui.QDockWidget.DockWidgetClosable | QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable | QtGui.QDockWidget.DockWidgetVerticalTitleBar)
 
-    def  ChooseWorkingDir(self):
+        WidgetProjectFolder = QtGui.QWidget()
+        self.LayoutProjectFolder = QtGui.QVBoxLayout()
+
+        BtnOpenFolder = QtGui.QPushButton("Open working folder")
+        self.LayoutProjectFolder.addWidget(BtnOpenFolder)
+        WidgetProjectFolder.setLayout(self.LayoutProjectFolder)
+        DockProjectFolder.setWidget(WidgetProjectFolder)
+
+        parent.addWidget(DockProjectFolder)
+        parent.addWidget(DockAstrometrySetting)
+        parent.addWidget(DockAstrometryOut)
+        BtnOpenFolder.clicked.connect(self.ChooseWorkingDir)
+        #parent.addWidget(DockAstrometrySetting)
+
+    def CollapseLP(self, state):
+        if state == QtCore.Qt.Checked:
+            print "ANO"
+            self.Local = True
+        else:
+            print "NE"
+            self.Local = False
+
+
+    def AstrometryMainTools(self):
+        self.FolderAstrometryMainToolsItem = QtGui.QVBoxLayout()
+        FolderAstrometryMainToolsItemWid = QtGui.QWidget()
+        FolderAstrometryMainToolsItemWid.setLayout(self.FolderAstrometryMainToolsItem)
+        self.ProjectToolBox.addItem(FolderAstrometryMainToolsItemWid, QtCore.QString("Astrometry Tools"))
+
+
+    def ChooseWorkingDir(self):
         FileDialog = QtGui.QFileDialog()
         FileDialog.setFileMode(2)
         self.VorkingDir = FileDialog.getExistingDirectory(self.win, 'Open file', '/home')
         print "WorkingDir: ", self.VorkingDir
 
-        ChbAutoProcessing = QtGui.QCheckBox("Auto processing")
         self.FolderModel = QtGui.QFileSystemModel()
         self.FolderModel.setRootPath(self.VorkingDir)
         self.FolderTree =  QtGui.QTreeView()
         self.FolderTree.setModel(self.FolderModel)
+        self.FolderTree.setRootIndex(self.FolderModel.index(self.VorkingDir) )
+        self.FolderTree.setColumnWidth(0, 800)
 
-        self.AbouteProject.addWidget(ChbAutoProcessing)
-        self.AbouteProject.addWidget(self.FolderTree)
+        self.LayoutProjectFolder.addWidget(self.FolderTree)
+        #self.LayoutProjectFolder.addStretch(1)
         self.FolderTree.clicked.connect(self.ClickedFile)
 
 
