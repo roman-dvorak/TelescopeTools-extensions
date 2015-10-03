@@ -166,7 +166,8 @@ class ASTROMETRY_RT(IPlugin):
         else:
             self.win = QtGui.QWidget()
             self.contentWidget = QtGui.QWidget(self.win)
-            self.content = QtGui.QHBoxLayout(self.contentWidget)
+            #self.content = QtGui.QHBoxLayout(self.contentWidget)
+            self.content = QtGui.QSplitter(QtCore.Qt.Horizontal)
             #self.Aboute = QtGui.QVBoxLayout()
 
             ChbCollapseLeftPanel = QtGui.QCheckBox()
@@ -206,11 +207,15 @@ class ASTROMETRY_RT(IPlugin):
             self.ProcessingGroup.setLayout(self.ProcessingFrame)
             '''
 
+            self.FrameProjectToolBox = QtGui.QFrame()
+            self.FrameProjectToolBox.setFrameShape(QtGui.QFrame.StyledPanel)
+
             self.LeftPanel()
             self.content.addWidget(ChbCollapseLeftPanel)
-            self.content.addLayout(self.VbxProjectToolBox,4)
-            self.content.addStretch(12)
+            self.content.addWidget(self.FrameProjectToolBox)
+            #self.content.addStretch(12)
             #self.content.addWidget(self.ProcessingGroup,12)
+            self.contentWidget.setLayout(self.content)
 
             #BtnOpenFolder.clicked.connect(self.ChooseWorkingDir)
             ChbCollapseLeftPanel.stateChanged.connect(self.CollapseLP)

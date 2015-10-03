@@ -2,8 +2,6 @@
 __pycache__/
 *.py[cod]
 
-CanonCapture/piggyphoto/
-
 # C extensions
 *.so
 

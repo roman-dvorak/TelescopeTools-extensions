@@ -15,6 +15,9 @@ class ListenWebsocket(QtCore.QThread):
     def __init__(self, parent=None, adress = None):
         super(ListenWebsocket, self).__init__(parent)
         self.parent = parent
+
+        #websocket.enableTrace(True)
+
         self.WS = websocket.WebSocketApp(adress,
                                 on_message = self.on_message,
                                 on_error = self.on_error,
@@ -73,8 +76,6 @@ class Communicator(QtCore.QThread):
         self.vAutoUpdate = True
         self.vLastOutPut = False
         self.vRecLoc = False
-        self.vRecRem = False
-        self.vEneCam = False        # Eneable remote camera
 
         print "##created"
 
@@ -124,6 +125,8 @@ class Communicator(QtCore.QThread):
             self.vLTStemp = float(result.split(';')[1])
 
 
+
+
     def updateUI(self):
         self.parent.LcnSHTtemp.display(self.vSHTtemp)
         self.parent.LcnSHTHumi.display(self.vSHThumi)
@@ -160,21 +163,14 @@ class Communicator(QtCore.QThread):
             self.vLastOutPut = widget.checkState()
         elif type == "ChbRecordLocaly":
             self.vRecLoc = widget.checkState()
-        elif type == "ChbRecordRemotly":
-            self.vRecRem = widget.checkState()
-        elif type == "ChbEneableCamera":
-            self.vEneCam = bool(widget.checkState())
-            if bool(widget.checkState()):
-                self.parent.LoadCamera(self.parent.BoxCameraProperties)
+
         self.updateUI()
 
-    def RCcapture(self, type=None, value=None):
-        if type == "capture":
-            self.ws.send("$capture;%d;%d;%d;%d;%d;%d;%d;%d;%d;%s;" %(1, 0, 10, 10, 10, 10, 10, 10, 10, "CaptureCap"))# type(full res, preview); quality; ISO; shutter; clona; Res; Res; Res; Res; id;
-        elif type == "preview":
-            self.ws.send("$capture;%d;%d;%d;%d;%d;%d;%d;%d;%d;%s;" %(0, 0, 10, 10, 10, 10, 10, 10, 10, "PreviewCap"))# type(full res, preview); quality; ISO; shutter; clona; Res; Res; Res; Res; id;
-
-
+        '''
+        self.ChbRecordLocaly.stateChanged.connect(lambda: self.thread.change("ChbRecordLocaly", self.ChbRecordLocaly))
+        self.ChbRecordRemotly.stateChanged.connect(lambda: self.thread.change("ChbRecordRemotly", self.ChbRecordRemotly))
+        self.ChbTimeDir.stateChanged.connect(lambda: self.thread.change("ChbTimeDir", self.ChbTimeDir)
+        '''
 
     def save(self, type = None):
         print "SAVE:", type
@@ -263,8 +259,8 @@ class Communicator(QtCore.QThread):
         print "Communicator ukoncen"
 
 
-class RA_HBSTEP_driver(IPlugin):
-    name = "MLAB telescope driver"
+class CanonCapture(IPlugin):
+    name = "Canon EOS capture"
 
     def __init__(self):
         self.type = 1   #loader
@@ -302,35 +298,6 @@ class RA_HBSTEP_driver(IPlugin):
         ### GroupBox
 
         self.win = QtGui.QWidget()
-        self.win.setMinimumHeight(900)
-        self.win.setMinimumWidth(900)
-
-        self.horizontalLayout = QtGui.QVBoxLayout()
-        self.scrollArea = QtGui.QScrollArea(self.win)
-        self.scrollArea.resize(900, 900)
-        self.scrollArea.setWidgetResizable(True)
-        self.contentWidget = QtGui.QWidget(self.win)
-        #self.contentWidget.setGeometry(0,0,900, 900)
-        self.content = QtGui.QHBoxLayout(self.contentWidget)
-        self.scrollArea.setWidget(self.contentWidget)
-        self.horizontalLayout.addWidget(self.scrollArea)
-
-        AbouteGroup = QtGui.QGroupBox("RA HBSTEP")
-        Aboute = QtGui.QVBoxLayout(self.win)
-
-        LocalRA =  QtGui.QCheckBox("Remote driver", self.win)
-        LocalRA.stateChanged.connect(self.ToggleLocal)
-
-        BtnLoad = QtGui.QPushButton("Load")
-        BtnLoad.clicked.connect(self.onConnect)
-
-        Aboute.addWidget(LocalRA)
-        Aboute.addWidget(BtnLoad)
-        Aboute.addWidget(QtGui.QLabel("system",self.win))
-
-        AbouteGroup.setLayout(Aboute)
-
-        self.content.addWidget(AbouteGroup)
 
 
         return self.win
@@ -349,23 +316,23 @@ class RA_HBSTEP_driver(IPlugin):
         if self.Local:
             VbxIP = QtGui.QHBoxLayout()
             VbxIP.addWidget(QtGui.QLabel("Remote adress:",self.win))
-            self.TbxIP = QtGui.QLineEdit("telescope.local")
+            self.TbxIP = QtGui.QLineEdit("192.168.1.184")
             VbxIP.addWidget(self.TbxIP)
             VbxPORT = QtGui.QHBoxLayout()
             VbxPORT.addWidget(QtGui.QLabel("Remote port:",self.win))
             self.NbxPORT = QtGui.QSpinBox()
             self.NbxPORT.setRange(0, 99999)
-            self.NbxPORT.setValue(10123)
+            self.NbxPORT.setValue(10345)
             VbxPORT.addWidget(self.NbxPORT)
-            BtnRemConnect = QtGui.QPushButton("Connect to MLAB telescope driver")
+            BtnRemConnect = QtGui.QPushButton("Conetct to RAmotor driver")
             BtnRemConnect.clicked.connect(self.RemConnect)
             PropertiesMainHFrame.addLayout(VbxIP)
             PropertiesMainHFrame.addLayout(VbxPORT)
             PropertiesMainHFrame.addWidget(BtnRemConnect)
             PropertiesMainHFrame.addStretch()
         else:
-            PropertiesMainHFrame.addWidget(QtGui.QLabel("This operation isn't supported yet.",self.win))
-            PropertiesMainHFrame.addWidget(QtGui.QLabel("Use Remote driving",self.win))
+            PropertiesMainHFrame.addWidget(QtGui.QLabel("This operation isnt supported yet.",self.win))
+            PropertiesMainHFrame.addWidget(QtGui.QLabel("Use remote driving",self.win))
             PropertiesMainHFrame.addWidget(QtGui.QLabel("Local driving will be supported as soos as possible :)",self.win))
             PropertiesMainHFrame.addStretch()
 
@@ -373,15 +340,6 @@ class RA_HBSTEP_driver(IPlugin):
         self.content.addWidget(self.PropertiesGroup)
 
     def RemConnect(self, state):
-
-        while self.content.count():
-            child = self.content.takeAt(0)
-            if child.widget() is not None:
-                child.widget().deleteLater()
-            elif child.self.content() is not None:
-                clearLayout(child.self.content())
-
-
         self.thread = Communicator(self, self.win)
         self.thread.start()
 
@@ -503,12 +461,6 @@ class RA_HBSTEP_driver(IPlugin):
         self.DriverGroup.setLayout(PropertiesMainHFrame)
         self.content.addWidget(self.DriverGroup)
 
-        self.CameraGroup = QtGui.QGroupBox("Remote camera manager")
-        self.CameraGroupLayout = QtGui.QVBoxLayout()
-        self.InitCameraBox(self.CameraGroupLayout)
-        self.CameraGroup.setLayout(self.CameraGroupLayout)
-        self.content.addWidget(self.CameraGroup)
-
         self.thread.updateUI()
 
         self.NbxSpdTime.valueChanged.connect(lambda: self.thread.change("NbxSpdTime", self.NbxSpdTime))
@@ -531,34 +483,5 @@ class RA_HBSTEP_driver(IPlugin):
         self.ChbTimeDir.stateChanged.connect(lambda: self.thread.change("ChbTimeDir", self.ChbTimeDir))
 
 
-    def InitCameraBox(self, group):
-        while group.count():
-            child = group.takeAt(0)
-            if child.widget() is not None:
-                child.widget().deleteLater()
-            elif child.group() is not None:
-                clearLayout(child.group())
 
-        self.ComDriverSelect = QtGui.QComboBox()
-        self.ComDriverSelect.addItem("Canon EOS (python-gphoto2)")
-        self.ChbEneableCamera = QtGui.QCheckBox("Eneable camera")
-        self.BoxCameraProperties = QtGui.QVBoxLayout()
-        group.addWidget(self.ComDriverSelect)
-        group.addWidget(self.ChbEneableCamera)
-        group.addLayout(self.BoxCameraProperties)
-        group.addStretch()
-        self.ChbEneableCamera.stateChanged.connect(lambda: self.thread.change("ChbEneableCamera", self.ChbEneableCamera))
-
-        #LoadCamera(self.BoxCameraProperties)
-
-    def LoadCamera(self, layout):
-        self.getRCpreview = QtGui.QPushButton("Get preview")
-        self.getRCCapture = QtGui.QPushButton("Get photo")
-
-        layout.addWidget(self.getRCpreview)
-        layout.addWidget(self.getRCCapture)
-
-        self.getRCpreview.clicked.connect(lambda: self.thread.RCcapture("preview"))
-        self.getRCCapture.clicked.connect(lambda: self.thread.RCcapture("capture"))
-        #layout.addWidget(QtGui.QLabel(""))
 
