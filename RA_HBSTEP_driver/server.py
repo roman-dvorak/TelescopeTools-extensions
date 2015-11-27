@@ -47,13 +47,13 @@ class axis:
         self.spi.SPI_write_byte(self.CS, speed)
       
     def ACC(self, speed):
-        ' Setup of maximum speed '
+        ' Setup of speed profile acceleration '
         self.spi.SPI_write_byte(self.CS, 0x05)       # Max Speed setup 
         self.spi.SPI_write_byte(self.CS, 0x00)
         self.spi.SPI_write_byte(self.CS, speed)
     
     def DCC(self, speed):
-        ' Setup of maximum speed '
+        ' Setup of speed profile deceleration '
         self.spi.SPI_write_byte(self.CS, 0x06)       # Max Speed setup 
         self.spi.SPI_write_byte(self.CS, 0x00)
         self.spi.SPI_write_byte(self.CS, speed)
