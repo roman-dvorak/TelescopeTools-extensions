@@ -329,7 +329,11 @@ class SocketHandler(websocket.WebSocketHandler):
 
 
 def main():
-    ip = ni.ifaddresses('eth0')[2][0]['addr']
+    ip="IPnotFound"
+    try:
+    	ip = ni.ifaddresses('eth0')[2][0]['addr']
+    except:
+	pass
     port = 10123
     print ip, port
     ra = RAserver(port, ip)
